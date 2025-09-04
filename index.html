@@ -1,0 +1,2091 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rakecrew — Home & Garden Pros Near You</title>
+  <meta name="description" content="Rakecrew connects you with reliable gardening, handyman, and cleaning services. Enter your UK postcode to check availability and book trusted pros." />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+  <style>
+    :root{
+      --bg:#0b0c10; /* deep charcoal */
+      --panel:#111317; /* panels */
+      --muted:#8a93a6; /* muted text */
+      --text:#eef2ff; /* near-white */
+      --brand:#58d68d; /* fresh green */
+      --brand-2:#4ea0f5; /* accent */
+      --ring: rgba(88,214,141,.35);
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+    a{color:inherit}
+    img{max-width:100%;display:block}
+
+    .container{max-width:1200px;margin-inline:auto;padding:24px}
+
+    /* Header */
+    header{position:sticky;top:0;z-index:100;background:linear-gradient(180deg,#0b0c10 70%,transparent)}
+    .nav{display:flex;align-items:center;gap:16px;justify-content:space-between;padding:16px 24px;border-bottom:1px solid #1b1f2a;background:rgba(11,12,16,.6);backdrop-filter:saturate(120%) blur(8px)}
+    .brand{display:flex;align-items:center;gap:12px;text-decoration:none}
+    .brand-logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      overflow: hidden;
+      background: none;
+      box-shadow: 0 8px 24px rgba(88,214,141,.25);
+      display: grid;
+      place-items: center;
+    }
+    .brand-logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border-radius: 12px;
+      display: block;
+      background: none;
+    }
+    .brand span{font-weight:700;letter-spacing:.2px}
+
+    .nav-cta{display:flex;gap:10px}
+    .btn{appearance:none;border:none;border-radius:14px;padding:12px 16px;font-weight:600;cursor:pointer}
+    .btn.primary{background:var(--brand);color:#0b0c10}
+    .btn.ghost{background:transparent;color:var(--text);border:1px solid #2a3142}
+    .btn:focus-visible{outline:3px solid var(--ring)}
+
+    /* Hero */
+    .hero{display:grid;grid-template-columns:1.2fr .8fr;gap:28px;align-items:center;padding:40px 24px}
+    .hero h1{font-size:clamp(28px,3vw,44px);line-height:1.05;margin:0 0 12px}
+    .hero p{color:var(--muted);margin:0 0 22px;font-size:clamp(15px,1.3vw,18px)}
+    .card{background:var(--panel);border:1px solid #1b1f2a;border-radius:22px;box-shadow:0 12px 40px rgba(0,0,0,.35);transition:all 0.3s ease}
+    .card:hover{box-shadow:0 16px 50px rgba(0,0,0,.4);transform:translateY(-2px)}
+    .pad{padding:24px}
+
+    .postcode-form{display:grid;grid-template-columns:1fr auto;gap:10px;margin-top:6px}
+    .field{display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
+    label{font-weight:600;margin-bottom:4px}
+    input[type="text"], input[type="tel"], input[type="email"], select{background:#0d0f14;border:1px solid #263047;color:var(--text);border-radius:12px;padding:14px 16px;font-size:16px;transition:all 0.3s ease}
+    input[type="text"]:hover, input[type="tel"]:hover, input[type="email"]:hover, select:hover{border-color:var(--brand-2)}
+    input[type="text"]:focus, input[type="tel"]:focus, input[type="email"]:focus, select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(88,214,141,0.1)}
+    /* Enhanced dropdown + option hover glow */
+    select{cursor:pointer;box-shadow:none;transition:box-shadow .2s ease}
+    select:focus{outline:3px solid var(--ring)}
+    select option{background:#0d0f14;color:var(--text)}
+    /* Generic hover glow for options */
+    select option:hover{color:#fff;text-shadow:0 0 6px rgba(255,255,255,.35)}
+    /* Category-matched hover glows */
+    select option[value="gardening"]:hover{background:rgba(88,214,141,.14);text-shadow:0 0 8px rgba(88,214,141,.65)}
+    select option[value="handyman"]:hover{background:rgba(185,122,87,.14);text-shadow:0 0 8px rgba(185,122,87,.65)}
+    select option[value="cleaning"]:hover{background:rgba(78,160,245,.14);text-shadow:0 0 8px rgba(78,160,245,.65)}
+    input[type="text"]:focus, input[type="tel"]:focus, input[type="email"]:focus{outline:3px solid var(--ring)}
+    .error{color:#ff6464;font-weight:600;display:none}
+    textarea#description {
+      max-width: 420px;
+      width: 100%;
+      margin-left: auto;
+      margin-right: auto;
+      display: block;
+      background: #0d0f14;
+      border: 1px solid #263047;
+      color: var(--text);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 16px;
+      margin-top: 10px;
+      resize: vertical;
+      box-shadow: none;
+      font-family: inherit;
+    }
+    textarea#description:focus {
+      outline: 3px solid var(--ring);
+    }
+    .field#descField {
+      margin-top: 28px;
+      display: none;
+      align-items: center;
+    }
+    .field#descField label {
+      margin-bottom: 8px;
+      width: 100%;
+      text-align: center;
+      font-size: 1.08em;
+    }
+    #descError {
+      text-align: center;
+    }
+
+    /* Map */
+    #map{height:420px;border-radius:20px;overflow:hidden;position:relative;z-index:1}
+    .map-foot{display:flex;align-items:center;gap:12px;margin-top:10px;color:var(--muted);font-size:14px}
+    
+    /* Smooth scrolling */
+    html {
+      scroll-behavior: smooth;
+    }
+    
+    /* Ensure proper layering */
+    .hero {
+      position: relative;
+      z-index: 1;
+    }
+    
+    .card {
+      position: relative;
+      z-index: 1;
+    }
+    
+    /* Map container improvements */
+    .map-container {
+      position: relative;
+      z-index: 1;
+      overflow: hidden;
+    }
+    
+    /* Prevent map from breaking out of container */
+    #map {
+      position: relative;
+      z-index: 1;
+      contain: layout style paint;
+    }
+    
+    /* Ensure smooth scrolling for all elements */
+    * {
+      scroll-behavior: smooth;
+    }
+    
+    /* Additional smooth scrolling improvements */
+    body {
+      -webkit-overflow-scrolling: touch;
+      scroll-behavior: smooth;
+    }
+    
+    /* Prevent map from interfering with scrolling */
+    .leaflet-container {
+      z-index: 1 !important;
+    }
+    
+    .leaflet-control-container {
+      z-index: 2 !important;
+    }
+
+    /* Categories */
+    .section{padding:32px 24px}
+    .section h2{font-size:clamp(22px,2.2vw,32px);margin:0 0 10px}
+    .section p.lead{color:var(--muted);margin:0 0 22px}
+    .grid{display:grid;gap:16px;grid-template-columns:repeat(3,1fr)}
+    @media (max-width:960px){.hero{grid-template-columns:1fr}.grid{grid-template-columns:1fr 1fr}}
+    @media (max-width:640px){.grid{grid-template-columns:1fr}}
+
+  .tile{perspective:1000px;position:relative;border-radius:20px;overflow:hidden;border:1px solid #1b1f2a;background:#0e1117;cursor:pointer;transition:box-shadow .2s ease}
+  .tile:hover{box-shadow:0 16px 40px rgba(0,0,0,.45)}
+  .tile-inner{position:relative;width:100%;height:100%;transition:transform 0.7s cubic-bezier(.4,2,.3,1);transform-style:preserve-3d;}
+  .flip-tile.flipped .tile-inner{transform:rotateY(180deg);}
+  .tile-front, .tile-back{position:absolute;top:0;left:0;width:100%;height:100%;backface-visibility:hidden;display:flex;flex-direction:column;justify-content:center;align-items:center;}
+  .tile-front{z-index:2;background:inherit;}
+  .tile-back{z-index:3;transform:rotateY(180deg);padding:0;text-align:center;}
+  .gardening-back{background:linear-gradient(135deg,rgba(88,214,141,0.4),rgba(11,12,16,0.95));}
+  .handyman-back{background:linear-gradient(135deg,rgba(139,69,19,0.4),rgba(11,12,16,0.95));}
+  .cleaning-back{background:linear-gradient(135deg,rgba(78,160,245,0.4),rgba(11,12,16,0.95));}
+  .tile img{width:100%;height:200px;object-fit:cover}
+  .tile .tile-body{padding:14px;text-align:center}
+  .chip{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;background:#101420;border:1px solid #1f2736;font-weight:600;font-size:12px;color:#d8e1ff}
+
+    /* Testimonials */
+    .testimonials{display:grid;gap:16px;grid-template-columns:repeat(3,1fr)}
+    .quote{padding:18px;border-radius:18px;border:1px solid #1b1f2a;background:#0e1117}
+    .stars{letter-spacing:2px}
+
+    /* Footer */
+    footer{padding:24px;border-top:1px solid #1b1f2a;color:var(--muted)}
+
+    /* QR Code Section */
+    .qr-section {
+      padding: 40px 24px;
+      background: linear-gradient(135deg, rgba(88,214,141,0.05), rgba(78,160,245,0.05));
+      border-top: 1px solid rgba(88,214,141,0.2);
+    }
+    
+    .qr-card {
+      max-width: 500px;
+      margin: 0 auto;
+      background: var(--panel);
+      border: 1px solid #1b1f2a;
+      border-radius: 20px;
+      padding: 32px;
+      text-align: center;
+      box-shadow: 0 12px 40px rgba(0,0,0,.3);
+    }
+    
+    .qr-content h3 {
+      color: var(--brand);
+      margin: 16px 0 8px;
+      font-size: 1.4em;
+      font-weight: 600;
+    }
+    
+    .qr-content p {
+      color: var(--muted);
+      margin: 0 0 24px;
+      line-height: 1.5;
+    }
+    
+    .qr-icon {
+      font-size: 2.5em;
+      margin-bottom: 8px;
+    }
+    
+    .qr-code-container {
+      margin: 24px 0;
+      display: flex;
+      justify-content: center;
+    }
+    
+    .qr-code {
+      width: 150px;
+      height: 150px;
+      background: white;
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .qr-code img {
+      width: 100%;
+      height: 100%;
+      border-radius: 8px;
+    }
+    
+    .qr-tips {
+      display: flex;
+      gap: 24px;
+      justify-content: center;
+      margin-top: 24px;
+      flex-wrap: wrap;
+    }
+    
+    .tip-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: rgba(78,160,245,0.1);
+      border: 1px solid rgba(78,160,245,0.2);
+      border-radius: 20px;
+      color: var(--text);
+      font-size: 0.9em;
+    }
+    
+    .tip-icon {
+      font-size: 1.2em;
+    }
+    
+    /* Responsive QR section */
+    @media (max-width: 640px) {
+      .qr-section {
+        padding: 24px 16px;
+      }
+      
+      .qr-card {
+        padding: 24px;
+      }
+      
+      .qr-code {
+        width: 120px;
+        height: 120px;
+      }
+      
+      .qr-tips {
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+      }
+      
+      .tip-item {
+        width: 100%;
+        max-width: 200px;
+        justify-content: center;
+      }
+    }
+
+    /* Spinner */
+    @keyframes spin{100%{transform:rotate(360deg)}}
+    #spinner{display:none;justify-content:center;align-items:center;padding:12px 0}
+    #spinner svg{animation:spin 1s linear infinite}
+    #noServicesMsg{color:#ff6464;font-weight:600;display:none;margin-top:10px}
+    #ukMap {
+      width: 100%;
+      height: 420px;
+      display: block;
+      border-radius: 20px;
+      overflow: hidden;
+      background: #f8f8f8;
+      position: relative;
+    }
+    #ukMap img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border-radius: 20px;
+      display: block;
+      background: #f8f8f8;
+      transition: opacity 0.3s;
+    }
+
+    /* Highlight glow effect for Services tab */
+    #servicesTab.glow {
+      box-shadow: 0 0 16px 4px var(--brand-2), 0 0 4px 2px var(--brand);
+      border-color: var(--brand-2);
+      background: linear-gradient(90deg, var(--brand-2) 10%, var(--brand) 90%);
+      color: #fff !important;
+      transition: box-shadow 0.3s, background 0.3s, border-color 0.3s;
+    }
+
+    .nav-cta a {
+      text-decoration: none !important;
+    }
+
+    .nav-cta {
+      position: relative;
+      z-index: 100;
+    }
+    .nav-cta.sticky {
+      position: fixed;
+      top: 0;
+      right: 0;
+      left: 0;
+      background: rgba(11,12,16,0.96);
+      box-shadow: 0 4px 24px rgba(78,160,245,0.08);
+      transition: top 0.3s, box-shadow 0.3s, background 0.3s;
+      border-radius: 0 0 18px 18px;
+      padding: 16px 24px;
+      max-width: 1200px;
+      margin: 0 auto;
+      animation: stickySlide .25s ease both;
+      z-index: 1000;
+    }
+
+    /* Stepper and transitions */
+    .stepper{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:12px;color:var(--muted);font-weight:600}
+    .badge{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;border:1px solid #2a3142;background:#0e1117;color:var(--text);font-size:13px}
+    .badge.active{background:var(--brand);color:#0b0c10;border-color:var(--brand);animation: pop .3s ease}
+    .fade{opacity:0;transform:translateY(6px);transition:opacity .25s ease, transform .25s ease}
+    .fade.show{opacity:1;transform:none}
+    .hidden{display:none}
+
+    /* Buttons micro-interactions */
+    .btn{transition:transform .12s ease, box-shadow .12s ease, opacity .3s ease, transform .3s ease}
+    .btn:hover{transform:scale(1.05);box-shadow:0 8px 24px rgba(88,214,141,.18)}
+    .btn.primary:hover{box-shadow:0 8px 24px rgba(88,214,141,.34)}
+    .btn:active{transform:scale(0.97)}
+    
+    /* Next button smooth animation */
+    .btn.primary.slide-in {
+      opacity: 0;
+      transform: translateY(20px) scale(0.9);
+      animation: slideInButton 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+    
+    @keyframes slideInButton {
+      0% {
+        opacity: 0;
+        transform: translateY(20px) scale(0.9);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+    
+    /* Form field animations */
+    .field {
+      transition: all 0.3s ease;
+    }
+    
+    .field.slide-up {
+      opacity: 0;
+      transform: translateY(15px);
+      animation: slideUpField 0.5s ease forwards;
+    }
+    
+    @keyframes slideUpField {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    /* Photo question buttons layout */
+    .photo-buttons {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      margin-top: 12px;
+    }
+    
+    .photo-buttons .btn {
+      min-width: 120px;
+      padding: 14px 20px;
+      font-size: 16px;
+      border-radius: 16px;
+      transition: all 0.3s ease;
+    }
+    
+    .photo-buttons .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(88,214,141,0.25);
+    }
+    
+    /* Photo preview styling */
+    .photo-preview-container {
+      display: flex;
+      gap: 12px;
+      margin-top: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+      min-height: 60px;
+    }
+    
+    .photo-preview-item {
+      position: relative;
+      width: 80px;
+      height: 80px;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 2px solid rgba(88,214,141,0.3);
+      background: var(--panel);
+      transition: all 0.3s ease;
+    }
+    
+    .photo-preview-item:hover {
+      border-color: var(--brand);
+      transform: scale(1.05);
+      box-shadow: 0 8px 24px rgba(88,214,141,0.2);
+    }
+    
+    .photo-preview-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    
+    .photo-remove-btn {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      width: 20px;
+      height: 20px;
+      background: #ff6464;
+      border: 2px solid var(--bg);
+      border-radius: 50%;
+      color: white;
+      font-size: 12px;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+    
+    .photo-remove-btn:hover {
+      background: #ff4444;
+      transform: scale(1.1);
+    }
+    
+    .photo-upload-area {
+      width: 80px;
+      height: 80px;
+      border: 2px dashed rgba(78,160,245,0.5);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(78,160,245,0.05);
+      color: var(--brand-2);
+      font-size: 24px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .photo-upload-area:hover {
+      border-color: var(--brand-2);
+      background: rgba(78,160,245,0.1);
+      transform: scale(1.05);
+    }
+    
+    .photo-count {
+      text-align: center;
+      margin-top: 8px;
+      font-size: 0.85em;
+      color: var(--muted);
+    }
+    
+         /* Success message styling */
+     .success-message {
+       background: linear-gradient(135deg, rgba(88,214,141,0.1), rgba(78,160,245,0.1));
+       border: 1px solid rgba(88,214,141,0.3);
+       border-radius: 16px;
+       padding: 24px;
+       text-align: center;
+       margin-top: 20px;
+       animation: successPulse 0.6s ease;
+     }
+     
+     /* Location info styling */
+     .location-details {
+       display: flex;
+       justify-content: center;
+       gap: 24px;
+       margin-bottom: 20px;
+       flex-wrap: wrap;
+     }
+     
+     .coord-group {
+       display: flex;
+       flex-direction: column;
+       align-items: center;
+       gap: 4px;
+       padding: 12px 16px;
+       background: rgba(78,160,245,0.1);
+       border: 1px solid rgba(78,160,245,0.2);
+       border-radius: 12px;
+       min-width: 120px;
+     }
+     
+     .coord-label {
+       font-size: 0.85em;
+       color: var(--brand-2);
+       font-weight: 600;
+       text-transform: uppercase;
+       letter-spacing: 0.5px;
+     }
+     
+     .coord-value {
+       font-family: 'Courier New', monospace;
+       font-size: 0.9em;
+       color: var(--text);
+       font-weight: 500;
+       background: rgba(0,0,0,0.2);
+       padding: 4px 8px;
+       border-radius: 6px;
+       border: 1px solid rgba(78,160,245,0.3);
+     }
+     
+           .address-section {
+        background: linear-gradient(135deg, rgba(88,214,141,0.08), rgba(78,160,245,0.05));
+        border: 1px solid rgba(88,214,141,0.25);
+        border-radius: 20px;
+        padding: 24px;
+        margin: 0 auto;
+        max-width: 520px;
+        box-shadow: 0 8px 32px rgba(88,214,141,0.1);
+      }
+      
+      .address-label {
+        font-size: 0.95em;
+        color: var(--brand);
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        margin-bottom: 16px;
+        text-align: center;
+        text-shadow: 0 0 20px rgba(88,214,141,0.3);
+      }
+      
+      .address-content {
+        font-size: 1.05em;
+        color: var(--text);
+        line-height: 1.7;
+        text-align: center;
+        padding: 20px;
+        background: linear-gradient(135deg, rgba(0,0,0,0.2), rgba(0,0,0,0.1));
+        border-radius: 16px;
+        border: 1px solid rgba(88,214,141,0.15);
+        word-wrap: break-word;
+        hyphens: auto;
+        backdrop-filter: blur(10px);
+      }
+      
+      .address-main {
+        font-size: 1.15em;
+        font-weight: 700;
+        color: var(--text);
+        margin-bottom: 12px;
+        padding: 12px 16px;
+        background: linear-gradient(135deg, rgba(88,214,141,0.2), rgba(88,214,141,0.1));
+        border-radius: 12px;
+        border: 1px solid rgba(88,214,141,0.3);
+        box-shadow: 0 4px 16px rgba(88,214,141,0.15);
+        text-shadow: 0 0 10px rgba(88,214,141,0.2);
+      }
+      
+      .address-secondary {
+        font-size: 1.02em;
+        color: var(--muted);
+        margin-bottom: 8px;
+        padding: 8px 14px;
+        background: linear-gradient(135deg, rgba(78,160,245,0.15), rgba(78,160,245,0.08));
+        border-radius: 10px;
+        border: 1px solid rgba(78,160,245,0.2);
+        box-shadow: 0 2px 8px rgba(78,160,245,0.1);
+      }
+      
+      .address-country {
+        font-size: 1em;
+        font-weight: 600;
+        color: var(--brand-2);
+        padding: 8px 14px;
+        background: linear-gradient(135deg, rgba(78,160,245,0.25), rgba(78,160,245,0.15));
+        border-radius: 10px;
+        border: 1px solid rgba(78,160,245,0.35);
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        box-shadow: 0 4px 16px rgba(78,160,245,0.2);
+        text-shadow: 0 0 15px rgba(78,160,245,0.3);
+      }
+     
+     .address-error {
+       color: #ff6464;
+       font-style: italic;
+       padding: 12px;
+       background: rgba(255,100,100,0.1);
+       border-radius: 8px;
+       border: 1px solid rgba(255,100,100,0.2);
+     }
+    
+    @keyframes successPulse {
+      0% { transform: scale(0.95); opacity: 0; }
+      50% { transform: scale(1.02); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    
+    .success-message h3 {
+      color: var(--brand);
+      margin: 0 0 12px 0;
+      font-size: 1.4em;
+    }
+    
+    .success-message p {
+      color: var(--muted);
+      margin: 0;
+      line-height: 1.6;
+    }
+
+    /* Spinner fade */
+    #spinner{display:flex;opacity:0;transition:opacity .2s ease}
+    #spinner.show{opacity:1}
+
+    /* Intro pop-in */
+    .intro-pop{opacity:1;transform:none;transition:opacity .4s ease, transform .4s ease}
+    .intro-pop.show{opacity:1;transform:none;transition:opacity .4s ease, transform .4s ease}
+
+    /* Testimonials and tiles reveal */
+    .reveal{opacity:0;transform:translateY(10px);transition:opacity .4s ease, transform .4s ease}
+    .reveal.show{opacity:1;transform:none}
+
+    /* Invalid shake */
+    .shake{animation: shake .28s ease}
+
+    /* Leaflet marker animations */
+    .leaflet-marker-icon.bounce{animation: bounce .45s ease}
+    .leaflet-marker-icon.pulse{box-shadow:0 0 0 0 rgba(78,160,245,.5);animation:pulse 1s ease-out 1; border-radius:50%}
+
+    /* Keyframes */
+    @keyframes pop{0%{transform:scale(.9)}60%{transform:scale(1.06)}100%{transform:scale(1)}}
+    @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+    @keyframes bounce{0%{transform:translateY(-20px)}60%{transform:translateY(6px)}80%{transform:translateY(-3px)}100%{transform:translateY(0)}}
+    @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(78,160,245,.6)}70%{box-shadow:0 0 0 12px rgba(78,160,245,0)}100%{box-shadow:0 0 0 0 rgba(78,160,245,0)}}
+    @keyframes stickySlide{from{transform:translateY(-20px);opacity:0}to{transform:none;opacity:1}}
+  </style>
+  <!-- EmailJS (optional, for sending confirmation emails without a backend) -->
+  <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+</head>
+<body>
+  <header>
+    <div class="nav container">
+              <a class="brand" href="#">
+          <div class="brand-logo" aria-hidden="true">
+            <img src="assets/images/web_logo.png" alt="Rakecrew logo" />
+          </div>
+          <span>Rakecrew</span>
+      </a>
+      <nav class="nav-cta">
+        <a class="btn primary" id="contactUsBtn" href="#contact">Contact us</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- Creative Introduction Section -->
+    <section class="section container" style="margin-bottom:32px;">
+      <div style="max-width:700px;margin:auto;text-align:center;" class="intro-pop" id="intro">
+        <h1 style="font-size:2.2em;margin-bottom:14px;">
+          Welcome to Rakecrew!
+        </h1>
+        <p style="font-size:1.18em;color:var(--muted);margin-bottom:18px;">
+          We provide a full range of home and garden services — from sparkling cleaning, lush gardening, to expert handyman solutions. Our friendly team is here to make your life easier, one job at a time.
+        </p>
+        <p style="font-size:1.08em;color:var(--brand-2);margin-bottom:8px;">
+           Ready to get started?
+        </p>
+        <p>
+           <span style="font-size:1.08em;">Scroll down to choose your service and get a quote.</span>
+        </p>
+      </div>
+    </section>
+
+                   <!-- Services Section (temporarily hidden) -->
+      <section class="section container" id="services" style="display: none;">
+        <h2>Our Services</h2>
+        <div class="grid">
+          <div class="tile flip-tile" data-cat="gardening">
+            <div class="tile-inner">
+              <div class="tile-front">
+                <img src="https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=400&h=200&fit=crop" alt="Gardening service" />
+                <div class="tile-body">
+                  <h3>Gardening</h3>
+                  <p>From lawn care to landscape design, we keep your garden thriving.</p>
+                  <div class="chip">🌱 Professional</div>
+                </div>
+              </div>
+              <div class="tile-back gardening-back">
+                <h3>Gardening Services</h3>
+                <p>Lawn mowing, hedge trimming, planting, weeding, garden design, seasonal maintenance</p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="tile flip-tile" data-cat="handyman">
+            <div class="tile-inner">
+              <div class="tile-front">
+                <img src="https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=400&h=200&fit=crop" alt="Handyman service" />
+                <div class="tile-body">
+                  <h3>Handyman</h3>
+                  <p>Repairs, installations, and maintenance for your home and garden.</p>
+                  <div class="chip">🔧 Reliable</div>
+                </div>
+              </div>
+              <div class="tile-back handyman-back">
+                <h3>Handyman Services</h3>
+                <p>Fencing, decking, painting, small repairs, installations, maintenance</p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="tile flip-tile" data-cat="cleaning">
+            <div class="tile-inner">
+              <div class="tile-front">
+                <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=200&fit=crop" alt="Cleaning service" />
+                <div class="tile-body">
+                  <h3>Cleaning</h3>
+                  <p>Deep cleaning and regular maintenance to keep your space spotless.</p>
+                  <div class="chip">✨ Spotless</div>
+                </div>
+              </div>
+              <div class="tile-back cleaning-back">
+                <h3>Cleaning Services</h3>
+                <p>House cleaning, office cleaning, deep cleaning, regular maintenance</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    <!-- How it works -->
+    <section class="section container" id="how">
+      <h2>How it works</h2>
+      <div style="display:flex;flex-direction:column;gap:32px;align-items:center;max-width:700px;margin:auto;">
+        <div style="background:var(--panel);border-radius:18px;padding:24px 28px;box-shadow:0 4px 24px rgba(88,214,141,0.08);display:flex;align-items:center;gap:18px;">
+          <div style="font-size:2.2em;line-height:1;flex-shrink:0;color:var(--brand);font-weight:700;">1</div>
+          <div>
+            <h3 style="margin:0 0 6px;">Pick your service</h3>
+            <p style="margin:0;color:var(--muted);font-size:1.08em;">
+              Select what you need: Gardening, Handyman, or Cleaning. We'll tailor everything to your choice.
+            </p>
+          </div>
+        </div>
+        <div style="background:var(--panel);border-radius:18px;padding:24px 28px;box-shadow:0 4px 24px rgba(78,160,245,0.08);display:flex;align-items:center;gap:18px;">
+          <div style="font-size:2.2em;line-height:1;flex-shrink:0;color:var(--brand-2);font-weight:700;">2</div>
+          <div>
+            <h3 style="margin:0 0 6px;">Upload photographs (optional, but helpful)</h3>
+            <p style="margin:0;color:var(--muted);font-size:1.08em;">
+              Snap a photo of your garden, upload blueprints for handyman work, or show us cleaning areas. The more detail, the faster and more accurate your quote!
+            </p>
+          </div>
+        </div>
+        <div style="background:var(--panel);border-radius:18px;padding:24px 28px;box-shadow:0 4px 24px rgba(139,69,19,0.08);display:flex;align-items:center;gap:18px;">
+          <div style="font-size:2.2em;line-height:1;flex-shrink:0;color:#b97a57;font-weight:700;">3</div>
+          <div>
+            <h3 style="margin:0 0 6px;">Enter your postcode</h3>
+            <p style="margin:0;color:var(--muted);font-size:1.08em;">
+              Pop in your UK postcode so we can match you with the best local quotation for your needs.
+            </p>
+          </div>
+        </div>
+        <div style="background:var(--panel);border-radius:18px;padding:24px 28px;box-shadow:0 4px 24px rgba(88,214,141,0.08);display:flex;align-items:center;gap:18px;">
+          <div style="font-size:2.2em;line-height:1;flex-shrink:0;color:var(--brand);font-weight:700;">4</div>
+          <div>
+            <h3 style="margin:0 0 6px;">Submit your order</h3>
+            <p style="margin:0;color:var(--muted);font-size:1.08em;">
+              Send your request and our friendly team will get back to you shortly with your tailored quote.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Hero / Postcode + Map Panel (moved below How it works) -->
+    <section class="hero container" id="check">
+      <div>
+        <h2 style="font-size:1.6em;margin-bottom:10px;">Please choose the service you require</h2>
+        <p>Pick Gardening, Handyman, or Cleaning below. Then enter your UK postcode for a tailored quote.</p>
+        <div class="card pad">
+          <div class="stepper"><span class="badge active" id="stepBadge1">1</span> <span id="stepLabel">Step 1 of 2</span></div>
+          <form id="postcodeForm" novalidate>
+            <!-- Service select -->
+            <div class="field" style="margin-top:14px">
+              <label for="service">Choose your type of service</label>
+              <select id="service" name="service">
+                <option value="">Select a category</option>
+                <option value="gardening">Gardening</option>
+                <option value="handyman">Handyman</option>
+                <option value="cleaning">Cleaning</option>
+              </select>
+            </div>
+            <!-- Description field -->
+            <div class="field" id="descField" style="margin-top:28px;display:none">
+              <label for="description" style="margin-bottom:8px;">Short description of your request</label>
+              <textarea id="description" name="description" rows="3" minlength="20" placeholder="Please describe your needs (minimum 20 characters)"></textarea>
+              <div id="descError" class="error">Please provide a more detailed description (at least 20 characters).</div>
+              <button type="button" id="descNextBtn" class="btn primary" style="margin-top:14px;display:none;">Next</button>
+            </div>
+            <!-- Photo question buttons (hidden by default) -->
+            <div class="field" id="photoQField" style="margin-top:24px;display:none">
+              <label style="margin-bottom:12px;text-align:center;font-size:1.1em;">Do you have photos to attach?</label>
+              <div class="photo-buttons">
+                <button type="button" id="photoYes" class="btn ghost">Yes, I have photos</button>
+                <button type="button" id="photoNo" class="btn ghost">No, skip photos</button>
+              </div>
+              <div style="text-align:center;margin-top:16px;color:var(--muted);font-size:0.9em;">
+                💡 <strong>Tip:</strong> Photos help us provide more accurate quotes and faster service
+              </div>
+              <div style="text-align:center;margin-top:20px;">
+                <button type="button" id="backToDesc" class="btn ghost">← Back to Description</button>
+              </div>
+            </div>
+            <!-- Photos field (hidden by default) -->
+            <div class="field" id="photosField" style="margin-top:24px;display:none">
+              <label for="photos" style="text-align:center;font-size:1.1em;">Attach photos (optional but recommended)</label>
+              <div style="text-align:center;margin-bottom:16px;color:var(--muted);font-size:0.9em;">
+                📸 <strong>Tip:</strong> Upload clear photos of the area or work needed for better quotes (max 3 photos)
+              </div>
+              <input id="photos" name="photos" type="file" accept="image/*" multiple style="margin:0 auto;display:block;" form="detailsForm" />
+              <div id="photoPreview" class="photo-preview-container"></div>
+              <div id="photoError" class="error" style="display:none;text-align:center;">Please attach at least one photo to proceed.</div>
+              <div id="photoLimitError" class="error" style="display:none;text-align:center;">Maximum 3 photos allowed. Please remove some photos before adding more.</div>
+              <div style="text-align:center;margin-top:16px;">
+                <button type="button" id="continueBtn" class="btn primary">Continue</button>
+                <button type="button" id="backToPhotoQ" class="btn ghost" style="margin-left:12px;">Back</button>
+              </div>
+            </div>
+            <!-- Postcode field (hidden by default) -->
+            <div class="field" id="postcodeField" style="margin-top:24px;display:none">
+              <label for="postcode" style="text-align:center;font-size:1.1em;">Your UK Postcode</label>
+              <div style="text-align:center;margin-bottom:16px;color:var(--muted);font-size:0.9em;">
+                📍 <strong>Tip:</strong> Enter your postcode to find your exact location on the map
+              </div>
+              <div class="postcode-form">
+                <input id="postcode" name="postcode" type="text" inputmode="text" placeholder="e.g. SW1A 1AA" aria-describedby="pcError" autocomplete="postal-code" />
+                <button class="btn primary" type="submit">Find Location</button>
+              </div>
+              <div id="pcError" class="error" style="text-align:center;">Please enter a valid UK postcode.</div>
+              <div style="text-align:center;margin-top:12px;color:var(--muted);font-size:0.9em;">
+                💡 <strong>Tip:</strong> You can drag and drop the pin on the map – the system will auto-detect your postcode.
+              </div>
+              <!-- Back button to return to photo upload -->
+              <div style="text-align:center;margin-top:16px;">
+                <button type="button" id="backToPhotos" class="btn ghost" style="display:none;">← Back to Photos</button>
+              </div>
+                           <!-- Live-updating postcode linked to the pin -->
+               <div class="field" style="margin-top:20px">
+                 <label for="pinPostcode" style="text-align:center;">Pin postcode (live)</label>
+                 <input id="pinPostcode" type="text" placeholder="Updates when the pin moves — editable" />
+                 <div style="text-align:center;margin-top:12px;color:var(--muted);font-size:0.9em;">
+                   🎯 <strong>Tip:</strong> Drag the pin to fine-tune location or edit manually and press Enter
+                 </div>
+               </div>
+             </div>
+             <!-- Show live lat/lng and confirm address after pin is placed -->
+              <div id="locationInfo" style="display:none;margin-top:24px;text-align:center;">
+                <div class="location-details">
+                  <div class="coord-group">
+                    <span class="coord-label">📍 Latitude:</span>
+                    <span class="coord-value" id="latVal"></span>
+                  </div>
+                  <div class="coord-group">
+                    <span class="coord-label">📍 Longitude:</span>
+                    <span class="coord-value" id="lngVal"></span>
+                  </div>
+                </div>
+                <div class="address-section">
+                  <div class="address-label">📍 Full Address:</div>
+                  <div class="address-content" id="fullAddress"></div>
+                </div>
+                <!-- Navigation buttons moved here, after the address -->
+                <div style="display:flex;gap:12px;margin-top:24px;justify-content:center">
+                  <button type="button" class="btn ghost" id="backToPhotoQ2">Back</button>
+                  <button type="button" class="btn primary" id="nextToDetails">Next</button>
+                </div>
+             </div>
+          </form>
+          <div class="map-foot">
+            <span>🗺️ <strong>Map Tip:</strong></span> 
+            Use the map to verify your location. The pin will show your exact service area.
+          </div>
+
+          <!-- Add spinner element inside .card.pad (postcode/map panel) -->
+          <div id="spinner" style="display:flex;justify-content:center;align-items:center;padding:12px 0">
+            <svg width="32" height="32" viewBox="0 0 32 32" style="animation:spin 1s linear infinite">
+              <circle cx="16" cy="16" r="14" stroke="#58d68d" stroke-width="4" fill="none" opacity="0.3"/>
+              <path d="M16 2 a14 14 0 0 1 0 28" stroke="#4ea0f5" stroke-width="4" fill="none"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="card map-container" style="padding:10px">
+        <div id="map" role="region" aria-label="Service area map" style="height:420px;border-radius:20px;overflow:hidden;display:block;"></div>
+        <!-- Remove the UK static image map, only show Leaflet map -->
+      </div>
+      
+      <!-- Step 2: User Details Form (hidden initially) -->
+      <div class="card pad fade hidden" id="detailsCard" style="margin-top:16px">
+        <div class="stepper"><span class="badge" id="stepBadge2">2</span> <span>Step 2 of 2</span></div>
+        <form id="detailsForm" action="https://formsubmit.co/8133f642d5a0e494ca4af955fdf8ca99" method="POST" enctype="multipart/form-data" target="fsFrame" novalidate>
+          <!-- Hidden fields for additional form data -->
+          <input type="hidden" name="service" id="hiddenService" />
+          <input type="hidden" name="description" id="hiddenDescription" />
+          <input type="hidden" name="postcode" id="hiddenPostcode" />
+          <input type="hidden" name="latitude" id="hiddenLatitude" />
+          <input type="hidden" name="longitude" id="hiddenLongitude" />
+          <input type="hidden" name="address" id="hiddenAddress" />
+          <input type="hidden" name="_subject" value="New Service Request from Rakecrew Website" />
+          <input type="hidden" name="_to" value="admin@rakecrew.com" />
+          <input type="hidden" name="_captcha" value="false" />
+          <input type="hidden" name="_template" value="box" />
+          
+          <div class="field">
+            <label for="userName">Name</label>
+            <input id="userName" name="name" type="text" placeholder="Your full name" required />
+            <div id="nameErr" class="error">Name is required.</div>
+          </div>
+          <div class="field">
+            <label for="userPhone">Preferred Contact Number</label>
+             <input id="userPhone" name="phone" type="tel" placeholder="e.g. 07123 456789" required />
+             <div id="phoneErr" class="error">Please enter a valid UK mobile number (10 digits).</div>
+          </div>
+          <div class="field">
+            <label for="userEmail">Email (optional)</label>
+             <input id="userEmail" name="email" type="email" placeholder="you@example.com" />
+             <div id="emailErr" class="error">Please enter a valid email address.</div>
+          </div>
+          <div style="display:flex;gap:10px;justify-content:center;margin-top:10px">
+            <button type="button" class="btn ghost" id="backToMap">Back</button>
+            <button type="submit" class="btn primary" id="submitDetails">Submit</button>
+          </div>
+          <div id="submitMsg" style="text-align:center;margin-top:10px;color:var(--muted)"></div>
+        </form>
+        
+        <!-- Success message (hidden initially) -->
+        <div id="successMessage" class="success-message" style="display:none;">
+          <h3>🎉 Order Submitted Successfully!</h3>
+          <p>Thank you for choosing Rakecrew! Your order has been received and will be reviewed by our team shortly.</p>
+          <p>We'll contact you within 24 hours with your personalized quote and to discuss next steps.</p>
+          <div style="margin-top:18px;display:flex;justify-content:center;">
+            <button type="button" id="newRequestBtn" class="btn primary" style="display:inline-flex;align-items:center;gap:8px;">
+              <span>➕</span>
+              <span>Submit another request</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Social proof -->
+    <section class="section container">
+      <h2>People like working with us</h2>
+      <div class="testimonials">
+        <div class="quote"><div class="stars">★★★★★</div><p>"Showed up on time, cracked on, garden looks lush. Booking again next month."</p><small>— Jenna, SW11</small></div>
+        <div class="quote"><div class="stars">★★★★★</div><p>"Solid handyman work. Shelves straight, no mess left behind. Respect."</p><small>— Kareem, M15</small></div>
+        <div class="quote"><div class="stars">★★★★☆</div><p>"Deep clean made the flat feel brand new. Super easy to arrange."</p><small>— Aidan, BS8</small></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="container">
+    <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between">
+      <div>&copy; <span id="year"></span> Rakecrew. All rights reserved.</div>
+    </div>
+    <section class="section container" id="contact">
+      <h2>Contact Us</h2>
+      <div style="display:flex;align-items:center;gap:18px;font-size:18px">
+        <a href="https://wa.me/447310287294" style="display:flex;align-items:center;gap:8px;text-decoration:none;color:inherit" target="_blank">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp" style="width:28px;height:28px;vertical-align:middle;border-radius:6px" />
+          <span>07310 287294 (WhatsApp)</span>
+        </a>
+        <a href="mailto:admin@rakecrew.com" style="display:flex;align-items:center;gap:8px;text-decoration:none;color:inherit" target="_blank">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/4/4e/Mail_%28iOS%29.svg" alt="Email" style="width:28px;height:28px;vertical-align:middle;border-radius:6px;background:#fff;" />
+          <span>admin@rakecrew.com</span>
+        </a>
+      </div>
+    </section>
+  </footer>
+
+  <!-- QR Code Section for Mobile Sharing -->
+  <section class="qr-section">
+    <div class="container">
+      <div class="qr-card">
+        <div class="qr-content">
+          <div class="qr-icon">📱</div>
+          <h3>Share on Mobile</h3>
+          <p>Scan this QR code to view on your mobile device or share with others</p>
+          <div class="qr-code-container">
+            <div class="qr-code" id="qrCode">
+              <!-- QR Code will be generated here -->
+            </div>
+          </div>
+          <div class="qr-tips">
+            <div class="tip-item">
+              <span class="tip-icon">📲</span>
+              <span>Scan with your camera app</span>
+            </div>
+            <div class="tip-item">
+              <span class="tip-icon">🔗</span>
+              <span>Share the link easily</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    // Utils
+    const qs = (s, el=document) => el.querySelector(s);
+    const qsa = (s, el=document) => [...el.querySelectorAll(s)];
+
+    // Year
+    qs('#year').textContent = new Date().getFullYear();
+
+    // Generate QR Code for mobile sharing
+    function generateQRCode() {
+      const currentUrl = window.location.href;
+      const qrCodeContainer = qs('#qrCode');
+      
+      // Create QR code using a free QR code API
+      const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(currentUrl)}`;
+      
+      // Create and insert the QR code image
+      const qrImage = document.createElement('img');
+      qrImage.src = qrCodeUrl;
+      qrImage.alt = 'QR Code for Rakecrew website';
+      qrImage.style.width = '100%';
+      qrImage.style.height = '100%';
+      qrImage.style.borderRadius = '8px';
+      
+      qrCodeContainer.appendChild(qrImage);
+    }
+
+    // Generate QR code when page loads
+    document.addEventListener('DOMContentLoaded', generateQRCode);
+
+    // UK postcode validation (flexible, case-insensitive)
+    // Source: Simplified pattern covering standard formats incl. with/without space
+    // Fix UK postcode regex to accept all valid UK formats (more robust)
+    // Use a more permissive regex for UK postcodes
+    const UK_PC_RE = /^([A-Z]{1,2}\d{1,2}[A-Z]?\s?\d[A-Z]{2})$/i;
+
+    // Leaflet map init
+    // Set base location to center of the United Kingdom, with initial draggable marker
+    const map = L.map('map', { zoomControl: true }).setView([54.5, -3.5], 5.7); // UK center, zoomed out
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    const markerLayer = L.layerGroup().addTo(map);
+
+    let serviceMarkers = [];
+    
+         // Create initial draggable marker at UK center
+     let lastPin = L.marker([54.5, -3.5], { draggable: true }).addTo(markerLayer);
+     lastPin.bindPopup('<strong>Drag me to your location</strong><br>I\'ll auto-detect your postcode');
+     // Only show popup initially, not when postcode field is shown
+    
+    // Set up drag event for initial marker
+    lastPin.on('dragend', async function(e) {
+      const pos = lastPin.getLatLng();
+      // Reverse geocode for address when pin is dragged
+      try {
+        const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.lat}&lon=${pos.lng}&zoom=18&addressdetails=1`;
+        const res = await fetch(url, {
+          headers: {
+            'Accept': 'application/json',
+            'User-Agent': 'rakecrew/1.0 (admin@rakecrew.com)'
+          }
+        });
+        const data = await res.json();
+        if(data && data.display_name){
+          // Update location info if it's visible
+          if (latVal && lngVal) {
+            latVal.textContent = pos.lat.toFixed(6);
+            lngVal.textContent = pos.lng.toFixed(6);
+          }
+          if (fullAddress) {
+            const formattedAddress = formatAddress(data.display_name);
+            fullAddress.innerHTML = formattedAddress;
+          }
+          // Extract postcode if present
+          const maybePostcode = data.address && (data.address.postcode || data.address.postcode?.toUpperCase());
+          if (maybePostcode && pinPostcodeInput) {
+            pinPostcodeInput.value = maybePostcode.toUpperCase();
+          }
+          // Show location info if postcode field is visible
+          if (locationInfo && postcodeField && postcodeField.style.display === 'block') {
+            locationInfo.style.display = 'block';
+          }
+        }
+      } catch (error) {
+        console.log('Could not reverse geocode dragged location');
+      }
+    });
+
+    // Show spinner
+    function showSpinner(show=true){
+      const sp = qs('#spinner');
+      if (!sp) return;
+      if (show){ sp.classList.add('show'); }
+      else { sp.classList.remove('show'); }
+    }
+
+    // Show/hide no services message
+    function showNoServicesMsg(show=true){
+      qs('#noServicesMsg').style.display = show ? 'block' : 'none';
+    }
+
+    // Render service markers with empty state
+    function renderServiceMarkers(filter='all'){
+      // Clear old
+      serviceMarkers.forEach(m => markerLayer.removeLayer(m));
+      serviceMarkers = [];
+      // Add filtered
+      sampleServices.filter(s => filter==='all' || s.cat===filter)
+        .forEach(s => {
+          const m = L.marker([s.lat, s.lng]).bindPopup(`<strong>${s.name}</strong><br>${s.cat.charAt(0).toUpperCase()+s.cat.slice(1)} service`);
+          m.addTo(markerLayer);
+          serviceMarkers.push(m);
+        });
+    }
+
+    // Geocode with Nominatim (no API key). Respect usage policy by setting a UA & email if self-hosting.
+    async function geocodePostcode(pc){
+      // Use 'postalcode' param for Nominatim
+      const url = `https://nominatim.openstreetmap.org/search?format=json&countrycodes=gb&postalcode=${encodeURIComponent(pc)}`;
+      const res = await fetch(url, {
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'rakecrew/1.0 (admin@rakecrew.com)'
+        }
+      });
+      if(!res.ok) throw new Error('Network error');
+      const data = await res.json();
+      if(!Array.isArray(data) || data.length===0) return null;
+      // Use first result
+      const best = data[0];
+      return { lat: parseFloat(best.lat), lng: parseFloat(best.lon), display: best.display_name };
+    }
+
+    // Postcode form handling
+    const form = qs('#postcodeForm');
+    const input = qs('#postcode');
+    const serviceSelect = qs('#service');
+    const err = qs('#pcError');
+    const descField = qs('#descField');
+    const photoQField = qs('#photoQField');
+    const photosField = qs('#photosField');
+    const postcodeField = qs('#postcodeField');
+    const photoYes = qs('#photoYes');
+    const photoNo = qs('#photoNo');
+    const continueBtn = qs('#continueBtn');
+    const descInput = qs('#description');
+    const descError = qs('#descError');
+    const descNextBtn = qs('#descNextBtn');
+    const photoInput = qs('#photos');
+    const photoPreview = qs('#photoPreview');
+    const latVal = qs('#latVal');
+    const lngVal = qs('#lngVal');
+    const fullAddress = qs('#fullAddress');
+    const locationInfo = qs('#locationInfo');
+    const confirmAddressBtn = qs('#confirmAddressBtn');
+    const photoError = qs('#photoError');
+    const photoLimitError = qs('#photoLimitError');
+    const pinPostcodeInput = qs('#pinPostcode');
+    const nextToDetails = qs('#nextToDetails');
+    const backToMap = qs('#backToMap');
+    const backToService = qs('#backToService');
+    const detailsCard = qs('#detailsCard');
+    const stepBadge1 = qs('#stepBadge1');
+    const stepBadge2 = qs('#stepBadge2');
+    const stepLabel = qs('#stepLabel');
+    const detailsForm = qs('#detailsForm');
+    const nameInput = qs('#userName');
+    const phoneInput = qs('#userPhone');
+    const emailInput = qs('#userEmail');
+    const nameErr = qs('#nameErr');
+    const phoneErr = qs('#phoneErr');
+    const submitMsg = qs('#submitMsg');
+    let lastAddress = '';
+
+    // Auto-format postcode input (adds space if missing)
+    input.addEventListener('blur', () => {
+      let val = input.value.trim().toUpperCase();
+      if(val.length > 5 && !val.includes(' ')){
+        val = val.slice(0,-3) + ' ' + val.slice(-3);
+        input.value = val;
+      }
+    });
+
+    // Reset error when typing
+    input.addEventListener('input', () => {
+      err.style.display = 'none';
+      err.textContent = 'Please enter a valid UK postcode.';
+    });
+    // Show description box when service selected
+    serviceSelect.addEventListener('change', () => {
+      if (serviceSelect.value) {
+        descField.style.display = 'block';
+        descInput.value = '';
+        descError.style.display = 'none';
+        descNextBtn.style.display = 'none';
+        photoQField.style.display = 'none';
+        photosField.style.display = 'none';
+        postcodeField.style.display = 'none';
+        
+        // Reset to Step 1 when new service is selected
+        detailsCard.classList.remove('show');
+        detailsCard.classList.add('hidden');
+        stepBadge2.classList.remove('active');
+        stepBadge1.classList.add('active');
+        stepLabel.textContent = 'Step 1 of 2';
+      } else {
+        descField.style.display = 'none';
+        photoQField.style.display = 'none';
+        photosField.style.display = 'none';
+        postcodeField.style.display = 'none';
+      }
+    });
+
+    // Show "Next" button after 20 characters in description with smooth animation
+    descInput.addEventListener('input', () => {
+      if (descInput.value.trim().length >= 20) {
+        descError.style.display = 'none';
+        descNextBtn.style.display = 'inline-block';
+        // Add smooth slide-in animation
+        descNextBtn.classList.add('slide-in');
+      } else {
+        descNextBtn.style.display = 'none';
+        photoQField.style.display = 'none';
+        photosField.style.display = 'none';
+        postcodeField.style.display = 'none';
+        locationInfo.style.display = 'none'; // Hide lat/lng/address if description is too short
+      }
+    });
+
+    // When "Next" is clicked, show photo question
+    descNextBtn.addEventListener('click', () => {
+      descNextBtn.style.display = 'none';
+      photoQField.style.display = 'block';
+      photosField.style.display = 'none';
+      postcodeField.style.display = 'none';
+      locationInfo.style.display = 'none';
+      // Add slide-up animation
+      photoQField.classList.add('slide-up');
+    });
+    
+    // Back button from photo question to description
+    function backToDescription() {
+      photoQField.style.display = 'none';
+      photosField.style.display = 'none';
+      postcodeField.style.display = 'none';
+      locationInfo.style.display = 'none';
+      descNextBtn.style.display = 'inline-block';
+      
+      // Hide Step 2 and reset to Step 1
+      detailsCard.classList.remove('show');
+      detailsCard.classList.add('hidden');
+      stepBadge2.classList.remove('active');
+      stepBadge1.classList.add('active');
+      stepLabel.textContent = 'Step 1 of 2';
+      
+      // Remove animation classes
+      photoQField.classList.remove('slide-up');
+      photosField.classList.remove('slide-up');
+      postcodeField.classList.remove('slide-up');
+    }
+
+    // Show photo upload if Yes, else show postcode field
+    photoYes.addEventListener('click', () => {
+      photosField.style.display = 'block';
+      postcodeField.style.display = 'none';
+      photoQField.style.display = 'none';
+      photoError.style.display = 'none';
+      photoLimitError.style.display = 'none';
+      // Initialize photo preview
+      updatePhotoPreview();
+      // Add slide-up animation
+      photosField.classList.add('slide-up');
+    });
+    photoNo.addEventListener('click', () => {
+      photosField.style.display = 'none';
+      postcodeField.style.display = 'block';
+      photoQField.style.display = 'none';
+      photoError.style.display = 'none';
+      
+      // Hide back button since no photos were selected
+      const backToPhotosBtn = qs('#backToPhotos');
+      if (backToPhotosBtn) {
+        backToPhotosBtn.style.display = 'none';
+      }
+      
+      // Add slide-up animation
+      postcodeField.classList.add('slide-up');
+    });
+    
+    // Back button from photos field to photo question
+    qs('#backToPhotoQ').addEventListener('click', () => {
+      photosField.style.display = 'none';
+      photoQField.style.display = 'block';
+      postcodeField.style.display = 'none';
+      photoError.style.display = 'none';
+      
+      // Reset step label
+      stepLabel.textContent = 'Step 1 of 2';
+    });
+    
+         // Back button from postcode field to photo question
+     qs('#backToPhotoQ2').addEventListener('click', () => {
+       postcodeField.style.display = 'none';
+       photoQField.style.display = 'block';
+       photosField.style.display = 'none';
+       locationInfo.style.display = 'none';
+       
+       // Reset postcode form and location info
+       input.value = '';
+       pinPostcodeInput.value = '';
+       latVal.textContent = '';
+       lngVal.textContent = '';
+       fullAddress.innerHTML = '';
+       lastAddress = '';
+       
+       // Reset pin to UK center
+       if (lastPin) {
+         lastPin.setLatLng([54.5, -3.5]);
+         map.setView([54.5, -3.5], 5.7);
+         lastPin.bindPopup('<strong>Drag me to your location</strong><br>I\'ll auto-detect your postcode');
+       }
+       
+       // Reset step label
+       stepLabel.textContent = 'Step 1 of 2';
+     });
+     
+     // Back button from postcode field to photo upload (when photos are available)
+     qs('#backToPhotos').addEventListener('click', () => {
+       postcodeField.style.display = 'none';
+       photosField.style.display = 'none';
+       photoQField.style.display = 'block';
+       locationInfo.style.display = 'none';
+       
+       // Reset all location-related data
+       input.value = '';
+       pinPostcodeInput.value = '';
+       latVal.textContent = '';
+       lngVal.textContent = '';
+       fullAddress.innerHTML = '';
+       lastAddress = '';
+       
+       // Reset pin to UK center
+       if (lastPin) {
+         lastPin.setLatLng([54.5, -3.5]);
+         map.setView([54.5, -3.5], 5.7);
+         lastPin.bindPopup('<strong>Drag me to your location</strong><br>I\'ll auto-detect your postcode');
+       }
+       
+       // Reset step label
+       stepLabel.textContent = 'Step 1 of 2';
+     });
+    
+    // Back button from photo question to description
+    qs('#backToDesc').addEventListener('click', backToDescription);
+
+    // Prevent proceeding if no files attached when Yes is selected
+    continueBtn.addEventListener('click', () => {
+      if (photoFieldIsRequired() && selectedPhotos.length === 0) {
+        photoError.style.display = 'block';
+        return;
+      }
+      // Keep photo preview visible but move to postcode section
+      photosField.style.display = 'block';
+      postcodeField.style.display = 'block';
+      photoError.style.display = 'none';
+      photoLimitError.style.display = 'none';
+      
+      // Show/hide back button based on whether photos are available
+      const backToPhotosBtn = qs('#backToPhotos');
+      if (backToPhotosBtn) {
+        backToPhotosBtn.style.display = selectedPhotos.length > 0 ? 'inline-block' : 'none';
+      }
+      
+      // Update step label to show we're still in Step 1
+      stepLabel.textContent = 'Step 1 of 2';
+    });
+
+    // Helper to check if photo field is required (Yes selected)
+    function photoFieldIsRequired() {
+      return photosField.style.display === 'block' && photoQField.style.display === 'none';
+    }
+
+    // Photo upload handling with preview and 3-photo limit
+    let selectedPhotos = [];
+    const MAX_PHOTOS = 3;
+    
+    function updatePhotoPreview() {
+      const previewContainer = qs('#photoPreview');
+      previewContainer.innerHTML = '';
+      
+      // Add existing photos
+      selectedPhotos.forEach((photo, index) => {
+        const previewItem = document.createElement('div');
+        previewItem.className = 'photo-preview-item';
+        previewItem.innerHTML = `
+          <img src="${photo.url}" alt="Preview ${index + 1}" />
+          <div class="photo-remove-btn" onclick="removePhoto(${index})">×</div>
+        `;
+        previewContainer.appendChild(previewItem);
+      });
+      
+      // Add upload area if under limit
+      if (selectedPhotos.length < MAX_PHOTOS) {
+        const uploadArea = document.createElement('div');
+        uploadArea.className = 'photo-upload-area';
+        uploadArea.innerHTML = '+';
+        uploadArea.onclick = () => photoInput.click();
+        previewContainer.appendChild(uploadArea);
+      }
+      
+      // Update photo count
+      const countText = selectedPhotos.length > 0 ? `${selectedPhotos.length}/${MAX_PHOTOS} photos` : '';
+      const existingCount = qs('.photo-count');
+      if (existingCount) {
+        existingCount.textContent = countText;
+      } else if (countText) {
+        const countDiv = document.createElement('div');
+        countDiv.className = 'photo-count';
+        countDiv.textContent = countText;
+        previewContainer.parentNode.appendChild(countDiv);
+      }
+    }
+    
+    window.removePhoto = function(index) {
+      selectedPhotos.splice(index, 1);
+      updatePhotoPreview();
+      updatePhotoInput();
+      
+      // Update back button visibility if we're in postcode section
+      const backToPhotosBtn = qs('#backToPhotos');
+      if (backToPhotosBtn && postcodeField.style.display === 'block') {
+        backToPhotosBtn.style.display = selectedPhotos.length > 0 ? 'inline-block' : 'none';
+      }
+    };
+    
+    function updatePhotoInput() {
+      // Create a new FileList-like object for the form
+      const dt = new DataTransfer();
+      selectedPhotos.forEach(photo => {
+        dt.items.add(photo.file);
+      });
+      photoInput.files = dt.files;
+    }
+    
+    photoInput.addEventListener('change', (e) => {
+      const files = Array.from(e.target.files);
+      const newPhotos = [];
+      
+      files.forEach(file => {
+        if (file.type.startsWith('image/')) {
+          if (selectedPhotos.length + newPhotos.length < MAX_PHOTOS) {
+            const url = URL.createObjectURL(file);
+            newPhotos.push({ file, url });
+          }
+        }
+      });
+      
+      if (newPhotos.length > 0) {
+        selectedPhotos = [...selectedPhotos, ...newPhotos];
+        updatePhotoPreview();
+        updatePhotoInput();
+        photoError.style.display = 'none';
+        photoLimitError.style.display = 'none';
+      } else if (files.length > 0) {
+        photoLimitError.style.display = 'block';
+      }
+    });
+    
+    // Real-time phone number validation
+    phoneInput.addEventListener('input', () => {
+      phoneErr.style.display = 'none';
+      if (phoneInput.value.trim()) {
+        const digits = phoneInput.value.replace(/\D/g, '');
+        if (digits.length > 0 && !digits.startsWith('07')) {
+          phoneErr.textContent = 'UK mobile numbers start with 07';
+          phoneErr.style.display = 'block';
+        } else if (digits.length > 10) {
+          phoneErr.textContent = 'Phone number should be 10 digits';
+          phoneErr.style.display = 'block';
+        }
+      }
+    });
+    
+    // Real-time email validation
+    emailInput.addEventListener('input', () => {
+      qs('#emailErr').style.display = 'none';
+    });
+
+    // Show Leaflet map only after postcode is entered and valid
+    const mapDiv = qs('#map');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const raw = input.value.trim().toUpperCase();
+      if(!UK_PC_RE.test(raw)){
+        err.style.display = 'block';
+        qs('#postcode').classList.add('shake');
+        setTimeout(()=>qs('#postcode').classList.remove('shake'), 320);
+        return;
+      }
+      err.style.display = 'none';
+      // Description validation
+      if(descField.style.display === 'block'){
+        if(!descInput.value || descInput.value.trim().length < 20){
+          descError.style.display = 'block';
+          descInput.focus();
+          return;
+        }else{
+          descError.style.display = 'none';
+        }
+      }
+      input.disabled = true;
+      showSpinner(true);
+      try{
+        const result = await geocodePostcode(raw);
+        if(!result){
+          err.textContent = 'We couldn\'t find that postcode. Try again?';
+          err.style.display = 'block';
+          input.disabled = false;
+          showSpinner(false);
+          return;
+        }
+        // Move existing pin to new location or create new one if needed
+        if (lastPin) {
+          lastPin.setLatLng([result.lat, result.lng]);
+        } else {
+          lastPin = L.marker([result.lat, result.lng], { draggable: true }).addTo(markerLayer);
+        }
+                 // Pin bounce and pulse when placed
+         const el = lastPin._icon; if (el){ el.classList.add('bounce','pulse'); setTimeout(()=>el.classList.remove('pulse'), 900); }
+         // Update popup with postcode location and make it draggable
+         lastPin.bindPopup(`<strong>${raw}</strong><br>${result.display}<br><small>Drag to adjust location</small>`).openPopup();
+        // Center and zoom the map on the found location for a clean view
+        map.setView([result.lat, result.lng], 14, { animate: true, duration: 0.6 });
+        latVal.textContent = result.lat.toFixed(6);
+        lngVal.textContent = result.lng.toFixed(6);
+        fullAddress.textContent = result.display;
+        lastAddress = result.display;
+        locationInfo.style.display = 'block';
+        // Set live postcode box from the original input
+        pinPostcodeInput.value = raw;
+         
+         // Format and display the address nicely
+         const formattedAddress = formatAddress(result.display);
+         fullAddress.innerHTML = formattedAddress;
+         
+         // Location confirmed - user can now click Next to proceed to Step 2
+         // Step 2 will be shown when Next button is clicked
+
+        // Update lat/lng and address when pin is dragged
+        lastPin.on('dragend', async function(e) {
+          const pos = lastPin.getLatLng();
+          const el2 = lastPin._icon; if (el2){ el2.classList.add('pulse'); setTimeout(()=>el2.classList.remove('pulse'), 900); }
+          latVal.textContent = pos.lat.toFixed(6);
+          lngVal.textContent = pos.lng.toFixed(6);
+          // Reverse geocode for address
+          try {
+            const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.lat}&lon=${pos.lng}&zoom=18&addressdetails=1`;
+            const res = await fetch(url, {
+              headers: {
+                'Accept': 'application/json',
+                'User-Agent': 'rakecrew/1.0 (admin@rakecrew.com)'
+              }
+            });
+            const data = await res.json();
+            if(data && data.display_name){
+               const formattedAddress = formatAddress(data.display_name);
+               fullAddress.innerHTML = formattedAddress;
+              lastAddress = data.display_name;
+              // Extract postcode if present
+              const maybePostcode = data.address && (data.address.postcode || data.address.postcode?.toUpperCase());
+              if (maybePostcode) {
+                pinPostcodeInput.value = maybePostcode.toUpperCase();
+              }
+            } else {
+               fullAddress.innerHTML = '<div class="address-error">Address not found</div>';
+              lastAddress = '';
+            }
+          } catch {
+            fullAddress.textContent = 'Address not found';
+            lastAddress = '';
+          }
+        });
+
+        // Do NOT call renderServiceMarkers here to avoid adding extra markers
+        // If you want to show service markers, do it only after user confirms address
+      }catch(ex){
+        console.error(ex);
+        err.textContent = 'Something went wrong locating that postcode.';
+        err.style.display = 'block';
+      }finally{
+        input.disabled = false;
+        showSpinner(false);
+      }
+    });
+
+    // Confirm address button handlers (both buttons)
+    function getConfirmationPayload(){
+      return {
+        postcode: (pinPostcodeInput.value || input.value || '').trim().toUpperCase(),
+        latitude: latVal.textContent,
+        longitude: lngVal.textContent,
+        address: lastAddress
+      };
+    }
+
+         // Step navigation helpers
+     function goToDetails(){
+       stepBadge1.classList.remove('active');
+       stepBadge2.classList.add('active');
+       stepLabel.textContent = 'Step 2 of 2';
+       // Hide map-side controls and show details card
+       detailsCard.classList.remove('hidden');
+       requestAnimationFrame(() => detailsCard.classList.add('show'));
+       if (backToService) backToService.style.display = 'inline-block';
+       
+       // Scroll to Step 2 with a slight delay to ensure it's visible
+       setTimeout(() => {
+         const y = detailsCard.getBoundingClientRect().top + window.pageYOffset - 80;
+         window.scrollTo({ top: y, behavior: 'smooth' });
+       }, 150);
+     }
+         function backToMapStep(){
+      stepBadge2.classList.remove('active');
+      stepBadge1.classList.add('active');
+      stepLabel.textContent = 'Step 1 of 2';
+      detailsCard.classList.remove('show');
+      detailsCard.classList.add('hidden');
+      
+      // Smoothly scroll back to the postcode section without resetting state
+      const postcodeField = qs('#postcodeField');
+      if (postcodeField) {
+        const y = postcodeField.getBoundingClientRect().top + window.pageYOffset - 100;
+        window.scrollTo({ top: y, behavior: 'smooth' });
+      } else {
+        const checkSection = qs('#check');
+        if (checkSection) {
+          const y2 = checkSection.getBoundingClientRect().top + window.pageYOffset - 20;
+          window.scrollTo({ top: y2, behavior: 'smooth' });
+        }
+      }
+    }
+
+                   // Next button to proceed to Step 2 after location is confirmed
+      qs('#nextToDetails').addEventListener('click', (e) => {
+       e.preventDefault();
+       // Require a placed pin and a postcode value before proceeding
+       const payload = getConfirmationPayload();
+       if (!payload.postcode || !payload.latitude || !payload.longitude) {
+         err.textContent = 'Please place the pin and find a valid postcode first.';
+         err.style.display = 'block';
+         return;
+       }
+       err.style.display = 'none';
+       
+       // Use central helper to show Step 2 and scroll correctly
+       goToDetails();
+      });
+    
+    backToMap.addEventListener('click', (e) => { e.preventDefault(); backToMapStep(); });
+    if (backToService) backToService.addEventListener('click', (e) => { e.preventDefault(); backToMapStep(); });
+
+    // Fix: Ensure Leaflet map is initialized only once and is visible when needed
+    let mapInitialized = false;
+    function showLeafletMap(lat, lng, zoom) {
+      // ukMapDiv.style.display = 'none';
+      // mapDiv.style.display = 'block';
+      if (!mapInitialized) {
+        map.invalidateSize(); // Ensure proper sizing
+        mapInitialized = true;
+      }
+      map.setView([lat, lng], zoom);
+    }
+
+    // On page load, show UK map, hide Leaflet map
+    window.addEventListener('DOMContentLoaded', () => {
+      // Intro pop
+      const intro = qs('#intro');
+      if (intro) requestAnimationFrame(() => intro.classList.add('show'));
+      // Map sizing
+      setTimeout(() => {
+        map.invalidateSize();
+        // Ensure initial marker is properly set up
+        if (lastPin) {
+          lastPin.setLatLng([54.5, -3.5]);
+          map.setView([54.5, -3.5], 5.7);
+        }
+      }, 300); // Ensure Leaflet map is ready if shown later
+      
+      // Ensure smooth scrolling is enabled
+      document.documentElement.style.scrollBehavior = 'smooth';
+    });
+    
+    // Handle map resize on window resize
+    window.addEventListener('resize', () => {
+      setTimeout(() => {
+        if (map) {
+          map.invalidateSize();
+        }
+      }, 100);
+    });
+
+    // Allow manual editing of pin postcode input: on Enter, move the pin
+    pinPostcodeInput.addEventListener('keydown', async (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const typed = pinPostcodeInput.value.trim().toUpperCase();
+        if (!UK_PC_RE.test(typed)) {
+          err.textContent = 'Please enter a valid UK postcode.';
+          err.style.display = 'block';
+          return;
+        }
+        showSpinner(true);
+        try {
+          const res = await geocodePostcode(typed);
+          if (!res) {
+            err.textContent = 'We could not locate that postcode.';
+            err.style.display = 'block';
+            return;
+          }
+          err.style.display = 'none';
+                     // Move existing pin to new location
+           lastPin.setLatLng([res.lat, res.lng]);
+           map.setView([res.lat, res.lng], 14, { animate: true, duration: 0.6 });
+           latVal.textContent = res.lat.toFixed(6);
+           lngVal.textContent = res.lng.toFixed(6);
+           lastAddress = res.display;
+           fullAddress.textContent = res.display;
+           locationInfo.style.display = 'block';
+           // Update popup with new location
+           lastPin.bindPopup(`<strong>${typed}</strong><br>${res.display}<br><small>Drag to adjust location</small>`).openPopup();
+        } finally {
+          showSpinner(false);
+        }
+      }
+    });
+
+         // UK phone number validation (10 digits, mobile format)
+     function validateUKPhone(phone) {
+       // Remove all non-digit characters
+       const digits = phone.replace(/\D/g, '');
+       // Check if it's exactly 10 digits and starts with 07 (mobile)
+       return digits.length === 10 && digits.startsWith('07');
+     }
+     
+     // Format address for better display
+     function formatAddress(address) {
+       if (!address) return 'Address not available';
+       
+       // Split address into parts and format nicely
+       const parts = address.split(',').map(part => part.trim());
+       
+       // Create formatted HTML with proper spacing and emphasis
+       let formatted = '';
+       
+       // First part (usually street/house number) gets emphasis
+       if (parts[0]) {
+         formatted += `<div class="address-main">${parts[0]}</div>`;
+       }
+       
+       // Middle parts (city, county, etc.)
+       const middleParts = parts.slice(1, -1);
+       if (middleParts.length > 0) {
+         formatted += `<div class="address-secondary">${middleParts.join(', ')}</div>`;
+       }
+       
+       // Last part (country) gets special styling
+       if (parts[parts.length - 1]) {
+         formatted += `<div class="address-country">${parts[parts.length - 1]}</div>`;
+       }
+       
+       return formatted;
+     }
+    
+    // Email validation
+    function validateEmail(email) {
+      if (!email.trim()) return true; // Email is optional
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return emailRegex.test(email.trim());
+    }
+    
+    // Hidden iframe to receive FormSubmit response (prevents redirect)
+    const fsIframe = document.createElement('iframe');
+    fsIframe.name = 'fsFrame';
+    fsIframe.id = 'fsFrame';
+    fsIframe.style.display = 'none';
+    document.body.appendChild(fsIframe);
+
+    // Submit details to FormSubmit without redirect and show inline thank-you
+    detailsForm.addEventListener('submit', (e) => {
+      // Reset all error messages
+      nameErr.style.display = 'none';
+      phoneErr.style.display = 'none';
+      qs('#emailErr').style.display = 'none';
+      
+      let hasErrors = false;
+      
+      // Validate name
+      if (!nameInput.value.trim()) {
+        nameErr.style.display = 'block';
+        hasErrors = true;
+      }
+      
+      // Validate phone number
+      if (!phoneInput.value.trim()) {
+        phoneErr.style.display = 'block';
+        hasErrors = true;
+      } else if (!validateUKPhone(phoneInput.value.trim())) {
+        phoneErr.textContent = 'Please enter a valid UK mobile number (10 digits starting with 07).';
+        phoneErr.style.display = 'block';
+        hasErrors = true;
+      }
+      
+      // Validate email (optional but must be valid if provided)
+      if (emailInput.value.trim() && !validateEmail(emailInput.value.trim())) {
+        qs('#emailErr').style.display = 'block';
+        hasErrors = true;
+      }
+      
+      if (hasErrors) {
+        e.preventDefault();
+        return;
+      }
+
+      // Populate hidden fields with form data
+      qs('#hiddenService').value = serviceSelect.value || '';
+      qs('#hiddenDescription').value = descInput.value || '';
+      qs('#hiddenPostcode').value = (pinPostcodeInput.value || input.value || '').trim().toUpperCase();
+      qs('#hiddenLatitude').value = latVal.textContent || '';
+      qs('#hiddenLongitude').value = lngVal.textContent || '';
+      qs('#hiddenAddress').value = lastAddress || '';
+      
+      // Light UX: disable submit button and show status
+      const submitBtn = qs('#submitDetails');
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Submitting…';
+      }
+      submitMsg.textContent = 'Sending…';
+
+      // Populate hidden fields with form data (already handled above),
+      // and ensure the photo input is linked to this form via form attribute.
+
+      // Listen for iframe load to show inline success message
+      fsIframe.addEventListener('load', () => {
+        // Hide the form and show success message
+        detailsForm.style.display = 'none';
+        const successEl = qs('#successMessage');
+        if (successEl) {
+          successEl.style.display = 'block';
+          // Only scroll if the success box is not already mostly visible
+          const rect = successEl.getBoundingClientRect();
+          const fullyInView = rect.top >= 80 && rect.bottom <= (window.innerHeight - 40);
+          if (!fullyInView) {
+            window.scrollTo({ top: successEl.offsetTop - 50, behavior: 'smooth' });
+          }
+        }
+        submitMsg.textContent = '';
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Submit';
+        }
+      }, { once: true });
+    });
+
+    // New: Allow user to start a fresh request after successful submission
+    document.addEventListener('click', (e) => {
+      const target = e.target.closest('#newRequestBtn');
+      if (!target) return;
+      // Reset Stepper to Step 1
+      stepBadge2.classList.remove('active');
+      stepBadge1.classList.add('active');
+      stepLabel.textContent = 'Step 1 of 2';
+
+      // Reset forms and fields
+      detailsForm.reset();
+      form.reset();
+
+      // Clear dynamic state
+      serviceSelect.value = '';
+      descInput.value = '';
+      pinPostcodeInput.value = '';
+      input.value = '';
+      latVal.textContent = '';
+      lngVal.textContent = '';
+      fullAddress.innerHTML = '';
+      lastAddress = '';
+      selectedPhotos = [];
+      updatePhotoPreview();
+      updatePhotoInput();
+
+      // Hide/show the right sections
+      descField.style.display = 'none';
+      photoQField.style.display = 'none';
+      photosField.style.display = 'none';
+      postcodeField.style.display = 'none';
+      locationInfo.style.display = 'none';
+
+      // Show Step 1 card and hide Step 2 card and success
+      detailsCard.classList.remove('show');
+      detailsCard.classList.add('hidden');
+      detailsForm.style.display = '';
+      const successEl = qs('#successMessage');
+      if (successEl) successEl.style.display = 'none';
+
+      // Reset pin and map
+      if (lastPin) {
+        lastPin.setLatLng([54.5, -3.5]);
+      }
+      map.setView([54.5, -3.5], 5.7);
+      clearAllMarkers();
+
+      // Smooth scroll back to the selection at the top of Step 1
+      const startEl = qs('#check');
+      if (startEl) {
+        const y = startEl.getBoundingClientRect().top + window.pageYOffset - 20;
+        window.scrollTo({ top: y, behavior: 'smooth' });
+      }
+    });
+
+    // Define clearAllMarkers to safely remove service markers only (prevents runtime errors)
+    function clearAllMarkers(){
+      try {
+        // Remove only service markers, keep the main pin
+        serviceMarkers.forEach(m => markerLayer.removeLayer(m));
+      } catch (_) {}
+      serviceMarkers = [];
+      // Don't clear lastPin as it's the main user pin
+    }
+
+    // Category filter hooks (from select and card click)
+    qsa('.tile').forEach(tile => {
+      tile.addEventListener('click', () => {
+        const cat = tile.getAttribute('data-cat');
+        serviceSelect.value = cat;
+        descField.style.display = 'block';
+        renderServiceMarkers(cat);
+        window.scrollTo({top: qs('#check').offsetTop - 20, behavior:'smooth'});
+      });
+    });
+
+    // Category flip animation: toggle flip on click (improved)
+    document.querySelectorAll('.flip-tile').forEach(tile => {
+      tile.addEventListener('click', () => {
+        tile.classList.toggle('flipped');
+      });
+    });
+
+  // Scroll to contact section when "Contact us" is clicked
+  qs('#contactUsBtn').addEventListener('click', function(e) {
+    e.preventDefault();
+    const contactSection = qs('#contact');
+    if (contactSection) {
+      window.scrollTo({ top: contactSection.offsetTop - 20, behavior: 'smooth' });
+    }
+  });
+
+         // Services section is temporarily hidden
+
+    // Staggered reveals for testimonials and quotes
+    function staggerReveal(selector){
+      const els = qsa(selector);
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting){
+            const items = [...entry.target.children];
+            items.forEach((el, i) => {
+              el.classList.add('reveal');
+              setTimeout(()=> el.classList.add('show'), 120 * i);
+            });
+            io.unobserve(entry.target);
+          }
+        });
+      }, { threshold: .2 });
+      els.forEach(el => io.observe(el));
+    }
+    staggerReveal('.testimonials');
+
+    // Smooth sticky nav-cta when scrolling past the map
+    const navCta = document.querySelector('.nav-cta');
+    const mapSection = document.querySelector('#map');
+    let stickyActive = false;
+
+    function checkStickyNav() {
+      if (!navCta || !mapSection) return;
+      const rect = mapSection.getBoundingClientRect();
+      if (rect.bottom < 0) {
+        if (!stickyActive) {
+          navCta.classList.add('sticky');
+          stickyActive = true;
+        }
+      } else {
+        if (stickyActive) {
+          navCta.classList.remove('sticky');
+          stickyActive = false;
+        }
+      }
+    }
+
+    window.addEventListener('scroll', checkStickyNav);
+    window.addEventListener('resize', checkStickyNav);
+    document.addEventListener('DOMContentLoaded', checkStickyNav);
+  </script>
+</body>
+</html>
