@@ -877,7 +877,7 @@
             <!-- Description field -->
             <div class="field" id="descField" style="margin-top:28px;display:none">
               <label for="description" style="margin-bottom:8px;">Short description of your request</label>
-              <textarea id="description" name="description" rows="3" minlength="20" placeholder="Please describe your needs (minimum 20 characters)"></textarea>
+              <textarea id="description" name="description" rows="3" placeholder="Please describe your needs (a sentence or two is fine)"></textarea>
               <div id="descError" class="error">Please provide a more detailed description (at least 20 characters).</div>
               <button type="button" id="descNextBtn" class="btn primary" style="margin-top:14px;display:none;">Next</button>
             </div>
@@ -1298,9 +1298,9 @@
       }
     });
 
-    // Show "Next" button after 20 characters in description with smooth animation
+    // Show "Next" button as soon as the user starts typing
     descInput.addEventListener('input', () => {
-      if (descInput.value.trim().length >= 20) {
+      if (descInput.value.trim().length > 0) {
         descError.style.display = 'none';
         descNextBtn.style.display = 'inline-block';
         // Add smooth slide-in animation
@@ -1585,16 +1585,6 @@
         return;
       }
       err.style.display = 'none';
-      // Description validation
-      if(descField.style.display === 'block'){
-        if(!descInput.value || descInput.value.trim().length < 20){
-          descError.style.display = 'block';
-          descInput.focus();
-          return;
-        }else{
-          descError.style.display = 'none';
-        }
-      }
       input.disabled = true;
       showSpinner(true);
       try{
